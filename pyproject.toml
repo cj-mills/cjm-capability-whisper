@@ -16,10 +16,7 @@ dependencies = ['fastcore', 'pandas', 'cjm-substrate>=0.0.51', 'cjm-capability-p
 
 [project.urls]
 Repository = "https://github.com/cj-mills/cjm-capability-whisper"
-Documentation = "https://cj-mills.github.io/cjm-capability-whisper"
 
-[project.entry-points.nbdev]
-cjm_capability_whisper = "cjm_capability_whisper._modidx:d"
 
 [tool.setuptools.dynamic]
 version = {attr = "cjm_capability_whisper.__version__"}
@@ -27,4 +24,3 @@ version = {attr = "cjm_capability_whisper.__version__"}
 [tool.setuptools.packages.find]
 include = ["cjm_capability_whisper*"]
 
-[tool.nbdev]
