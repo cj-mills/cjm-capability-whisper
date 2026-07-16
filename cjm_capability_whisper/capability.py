@@ -25,7 +25,7 @@ from cjm_substrate.utils.validation import (config_to_dict, dataclass_to_jsonsch
                                             SCHEMA_TITLE)
 from cjm_substrate_torch_utils.device import resolve_torch_device
 from cjm_substrate_torch_utils.memory import release_model
-from cjm_substrate_torch_utils.oom import cuda_oom_to_capability_resource_error
+from cjm_substrate_torch_utils.oom import cuda_oom_to_capability_resource_error, is_cuda_oom
 
 try:
     import whisper
@@ -402,9 +402,13 @@ class WhisperLocalCapability(ToolCapability):
                     temperature=temperature,
                     **whisper_args
                 )
-        except torch.cuda.OutOfMemoryError as e:
+        except Exception as e:
             # SG-47 Track B: CUDA OOM during Whisper inference -> typed CapabilityResourceError
             # (cjm-substrate-torch-utils); substrate's CR-7 reactive-retry reloads + retries.
+            # is_cuda_oom also catches DRIVER-level OOM (a plain RuntimeError, invisible to
+            # the torch.cuda.OutOfMemoryError clause); non-OOM errors propagate unchanged.
+            if not is_cuda_oom(e):
+                raise
             raise cuda_oom_to_capability_resource_error(
                 e, label=f"during Whisper inference (model={model_name!r})",
             ) from e
@@ -500,13 +504,14 @@ class WhisperLocalCapability(ToolCapability):
                         self.logger.info("Model compiled with torch.compile")
 
                 self.logger.info("Local Whisper model loaded successfully")
-            except torch.cuda.OutOfMemoryError as e:
-                # SG-47 Track B: CUDA OOM during model load -> typed CapabilityResourceError
-                # (cjm-substrate-torch-utils); substrate's CR-7 reactive-retry reloads + retries.
-                raise cuda_oom_to_capability_resource_error(
-                    e, label=f"loading Whisper model {self.config.model!r}",
-                ) from e
             except Exception as e:
+                # SG-47 Track B: CUDA OOM during model load (caching-allocator subclass OR
+                # driver-level RuntimeError — is_cuda_oom) -> typed CapabilityResourceError;
+                # substrate's CR-7 reactive-retry evicts + reloads + retries.
+                if is_cuda_oom(e):
+                    raise cuda_oom_to_capability_resource_error(
+                        e, label=f"loading Whisper model {self.config.model!r}",
+                    ) from e
                 # SG-47: non-resource load failures (missing model, corrupt download,
                 # device misconfiguration) — fatal; author/config attention needed.
                 raise CapabilityFatalError(f"Failed to load Whisper model: {e}") from e
