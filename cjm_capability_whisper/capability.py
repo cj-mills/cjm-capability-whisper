@@ -43,6 +43,7 @@ WHISPER_AVAILABLE = _WHISPER_IMPORT_OK and shutil.which("ffmpeg") is not None
 @dataclass
 class WhisperCapabilityConfig:
     """Configuration for Whisper transcription capability."""
+
     model:str = field(
         default="base",
         metadata={
