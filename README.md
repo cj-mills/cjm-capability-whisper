@@ -6,7 +6,8 @@ An OpenAI Whisper speech-to-text capability for the cjm-substrate runtime that p
 
 ## Modules
 
-- **`cjm_capability_whisper.capability`**
+- **`cjm_capability_whisper.__init__`**
+- **`cjm_capability_whisper.capability`** — Capability implementation for OpenAI Whisper transcription (Option C, stage 8: pure compute).
 
 ## API
 
@@ -17,4 +18,4 @@ An OpenAI Whisper speech-to-text capability for the cjm-substrate runtime that p
 
 ## Dependencies
 
-**Depends on:** `cjm-capability-primitives`, `cjm-substrate`, `torch-utils`
+**Depends on:** `cjm-capability-primitives`, `cjm-substrate`, `cjm-substrate-torch-utils`, `fastcore`, `numpy`, `openai-whisper`, `pandas`, `soundfile`, `torch`
